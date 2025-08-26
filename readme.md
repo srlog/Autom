@@ -16,52 +16,42 @@ Autom combines large language model reasoning with workflow automation. The syst
 
 ---
 
-## Architecture
-
-```
-+----------------------+       +---------------------+
-|    Gemini AI Agent   | <---> |         n8n         |
-+----------------------+       +---------------------+
-         |                             |
-         v                             v
-  [Email Agent]                 [Calendar Agent]
-  [Contact Agent]               [Workflow Agent]
-         |                             |
-         v                             v
-+---------------------------------------------------+
-| Custom Flask Server (Local Automation Layer)      |
-| Executes instructions via PyAutoGUI / Webbrowser  |
-+---------------------------------------------------+
-```
-
----
-
 ## Workflows
+
+### Autom
+
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/56881f70-9d90-42fc-83f9-7172270d0c23" />
+
 
 ### 1. Email Agent
 Autom manages Gmail tasks such as sending, replying, and retrieving emails. It uses Gemini to determine intent and n8n to execute the actions.
 
-*Screenshot Placeholder*
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/65ed3cb2-8bea-4b06-a1f8-1f3d1e365794" />
+
 
 ### 2. Calendar Agent
 Autom integrates with Google Calendar to create, update, and delete events. It can be used to schedule meetings or reminders automatically.
 
-*Screenshot Placeholder*
+<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/ca766c02-fae1-4797-a601-0c588f6cc9c6" />
+
 
 ### 3. Contact Agent
 This workflow manages Google Contacts by creating, updating, or retrieving contact information directly through connected APIs.
 
-*Screenshot Placeholder*
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/1cc981b2-90fc-4e4a-8775-58746629c802" />
+
 
 ### 4. Form Response Agent
 Autom can respond to submissions from external contact forms. Based on the submission, it can trigger workflows such as sending a confirmation email or scheduling a follow-up meeting.
 
-*Screenshot Placeholder*
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/3a15f1b6-5a5b-4d18-a45e-0cf4eaee145f" />
+
 
 ### 5. Local Automation Server
 Autom includes a Flask-based server that receives structured arrays of instructions from the agent. These are executed on the local machine using PyAutoGUI and webbrowser, enabling true desktop-level automation.
 
-*Screenshot Placeholder*
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/b8e46d9d-b21a-4e99-a13b-6bb4c9353fa9" />
+
 
 ---
 
@@ -77,8 +67,8 @@ Autom includes a Flask-based server that receives structured arrays of instructi
 ## Future Enhancements
 
 - Integration of Playwright for robust browser control.
-- Expansion to include more APIs (Google Drive, Slack, etc.).
-- Voice-based interaction capabilities.
+- Expansion to include more APIs (Google Drive, Slack, Telegram, etc.).
+- Voice-based interaction capabilities using Elevenlabs.
 - Deployment of the local automation server for remote access.
 
 ---
