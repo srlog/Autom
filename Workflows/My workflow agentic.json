@@ -1,0 +1,194 @@
+{
+  "name": "My workflow agentic",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        384,
+        -192
+      ],
+      "id": "f72dcd7b-a2f2-4673-9f30-4a21618aa145",
+      "name": "When chat message received",
+      "webhookId": "9d8e197e-efb6-451f-903d-b662f116cd72"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        944,
+        -112
+      ],
+      "id": "b5c5843b-705d-4493-bfb9-2396ca1367ec",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "kMXcCgFjX5gF9LnS",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chatInput }}",
+        "options": {
+          "systemMessage": "You are a helpful assistant to send the RSS feed of my youtube channel to the mail id\n\nlakshana mail: lakshanarajendran05@gmail.com\nsinu mail: srilog.ed@gmail.com\n\nYOu can use the serpApi tool to search for queries"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        944,
+        -272
+      ],
+      "id": "21c094b1-f91e-4cab-9440-338bf2dc0865",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $fromAI('send_to') }}",
+        "subject": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Subject', ``, 'string') }}",
+        "message": "={{ $fromAI('summary')  }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        1344,
+        -80
+      ],
+      "id": "f5bc2630-c98a-4a83-bd2d-8ff7f35a64c5",
+      "name": "Send a message in Gmail",
+      "webhookId": "6294305e-31e2-423e-8f95-608a234a4af8",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9UnQOTubNFKXGQ6B",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://www.youtube.com/feeds/videos.xml?channel_id={{ $fromAI('channel_id') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedReadTool",
+      "typeVersion": 1.2,
+      "position": [
+        1232,
+        64
+      ],
+      "id": "53b7c89c-2b39-470a-8a48-081578a56fe5",
+      "name": "RSS Read1"
+    },
+    {
+      "parameters": {
+        "q": "={{ $fromAI('query') }}",
+        "additionalFields": {},
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-serpapi.serpApiTool",
+      "typeVersion": 1,
+      "position": [
+        1088,
+        144
+      ],
+      "id": "ba2584ca-08f1-4285-857d-d0c27c0add36",
+      "name": "Google search in SerpApi",
+      "credentials": {
+        "serpApi": {
+          "id": "qPotubViwApbEk3O",
+          "name": "SerpApi account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.googleFirebaseCloudFirestore",
+      "typeVersion": 1.1,
+      "position": [
+        80,
+        16
+      ],
+      "id": "f92a9a4a-ed62-4176-860b-d4a502a271a1",
+      "name": "Get a document"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message in Gmail": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google search in SerpApi": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b4490822-896e-4ba8-a759-f7248672e03c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5d96a1d220fe725f7242e55a2ce9729bf4c3973a43647e1417b7b694e8921e1b"
+  },
+  "id": "eTRCXjkYxPr9gKsl",
+  "tags": []
+}

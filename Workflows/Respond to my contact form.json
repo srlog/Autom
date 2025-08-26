@@ -1,0 +1,288 @@
+{
+  "name": "Respond to my contact form",
+  "nodes": [
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        464,
+        32
+      ],
+      "id": "b34b0bbd-0573-40fc-8511-ba42f810840b",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "U4XuX6VTBRpO5ggY",
+          "name": "Groq account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\t\"message\": \"Your message here\",\n\t\"summary\":\"THe summary of the message of the guest\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        656,
+        0
+      ],
+      "id": "12222cb6-3cfc-4bf8-bcc8-d7c00b166f47",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -176,
+        -240
+      ],
+      "id": "88c20691-6c31-45c0-bd52-d853e22b8654",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "getAll",
+        "projectId": "seenu-portofolio",
+        "collection": "contacts"
+      },
+      "type": "n8n-nodes-base.googleFirebaseCloudFirestore",
+      "typeVersion": 1.1,
+      "position": [
+        128,
+        -384
+      ],
+      "id": "b23e75c9-8251-4513-9dac-c9247a7acf9c",
+      "name": "Get contact requests",
+      "credentials": {
+        "googleApi": {
+          "id": "pNhc8e43PN1qLg5z",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d3f7d605-28ca-4ca3-8a71-441cd6811862",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "new",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": "=",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        128,
+        -160
+      ],
+      "id": "69d2b8c4-8a17-4e24-ad80-f2d64d549270",
+      "name": "Filter out unresponsed queries"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a ai assitant that responds to the contact for on my portofolio\n\nEmail: {{ $json.email }}\nSubject : {{ $json.subject }}\nGuest's message:  {{ $json.message }}",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        464,
+        -176
+      ],
+      "id": "b39eb667-5188-4aca-a8be-0337ba069ddd",
+      "name": "Generate reply"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Filter out unresponsed queries').item.json.email }}",
+        "subject": "Will be in contact soon...",
+        "message": "={{ $json.output.message }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        928,
+        -176
+      ],
+      "id": "49c02612-5987-4290-ae21-659a77809969",
+      "name": "Send reply",
+      "webhookId": "3b1b40a1-bcf6-433b-9a81-b06c9d0331a8",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9UnQOTubNFKXGQ6B",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "srilog.ed@gmail.com",
+        "subject": "={{ $('Get contact requests').item.json.name }} wants to contact you!!",
+        "message": "=Summary: \n{{ $('Generate reply').item.json.output.summary }}\n\nMessage:\n{{ $('Get contact requests').item.json.subject }}\n{{ $('Get contact requests').item.json.message }}\n\n\nAt {{ $('Get contact requests').item.json.timestamp }}\n\nResponse Given:\n{{ $('Generate reply').item.json.output.message }}\n\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1184,
+        -144
+      ],
+      "id": "282c6ee4-c4ac-4c52-b656-6bcd3d2b5572",
+      "name": "Inform me",
+      "webhookId": "80b8b26c-a9ff-4a6a-9d70-3a7f8cba04a9",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9UnQOTubNFKXGQ6B",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://firestore.googleapis.com/v1/projects/seenu-portofolio/databases/(default)/documents/contacts/{{ $('Filter out unresponsed queries').item.json._id }}?updateMask.fieldPaths=status",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"fields\": {\n    \"status\": {\n      \"stringValue\": \"replied\"\n    }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1008,
+        112
+      ],
+      "id": "7010bf9f-7ae2-4c14-9377-53efd4f9644e",
+      "name": "Update the status"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate reply",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Generate reply",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get contact requests",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get contact requests": {
+      "main": [
+        [
+          {
+            "node": "Filter out unresponsed queries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter out unresponsed queries": {
+      "main": [
+        [
+          {
+            "node": "Generate reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate reply": {
+      "main": [
+        [
+          {
+            "node": "Send reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send reply": {
+      "main": [
+        [
+          {
+            "node": "Inform me",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inform me": {
+      "main": [
+        [
+          {
+            "node": "Update the status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "9da73a97-d42f-4055-82a0-5f52af8262c2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5d96a1d220fe725f7242e55a2ce9729bf4c3973a43647e1417b7b694e8921e1b"
+  },
+  "id": "66GnFg4wSV0L2tPc",
+  "tags": []
+}

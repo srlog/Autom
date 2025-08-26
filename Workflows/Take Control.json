@@ -1,0 +1,294 @@
+{
+  "name": "Take Control",
+  "nodes": [
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "=Default",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        32,
+        128
+      ],
+      "id": "94e5467b-e61a-45ae-a630-903761dd0ecc",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"steps\": [\n    {\n      \"tool\": \"webbrowser\",\n      \"action\": \"open|https://www.youtube.com\"\n    },\n    {\n      \"tool\": \"pyautogui\",\n      \"action\": \"delay|1000\"\n    },\n    {\n      \"tool\": \"pyautogui\",\n      \"action\": \"click|580|180\"\n    },\n    {\n      \"tool\": \"pyautogui\",\n      \"action\": \"type|hi\"\n    },\n    {\n      \"tool\": \"pyautogui\",\n      \"action\": \"press|enter\"\n    },\n    {\n      \"tool\": \"pyautogui\",\n      \"action\": \"hotkey|win|5\"\n    }\n  ]\n}",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        288,
+        128
+      ],
+      "id": "0e26bd63-7bb0-490e-b6f9-7549cddc6950",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=\nUser input: {{ $('When Executed by Another Workflow').item.json.Command }}\n\nPlan:\n{{ $json.text }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "\nYou are AutomaBot, an AI agent that turns natural-language commands into a JSON array of executable steps.\n\nYou have two tools available: webbrowser and pyautogui. Your task is to generate a JSON object containing a series of steps to accomplish the user's goal.\n\nTools and Actions\nEach step in your output must specify a tool and an action. The action string must be a single, pipe-separated (|) value that includes the function to be called, followed by its required parameters in order.\n\n1. webbrowser\n\nopen|url: Opens a web browser to the specified URL.\n\nurl (string): The web address to open.\n\n2. pyautogui\n\nclick|x|y: Clicks the mouse at a specific screen coordinate.\n\nx (integer): The horizontal position from the left edge of the screen.\n\ny (integer): The vertical position from the top edge of the screen.\n\ntype|text: Types the given string of text.\n\ntext (string): The characters to be typed.\n\npress|key: Presses a single keyboard key.\n\nkey (string): The key to press (e.g., enter, esc, f5).\n\nhotkey|key1|key2: Presses a combination of two keys simultaneously.\n\nkey1 (string): The first key to press.\n\nkey2 (string): The second key to press.\n\ndelay|ms: Pauses execution for a specified duration.\n\nms (integer): The number of milliseconds to wait.\n\n🚨 Special Rule\nWhenever you need to enter text into a search bar (or any text field), you must insert a pyautogui.click step with explicit x and y coordinates pointing at that field before the pyautogui.type step. And for searching for someone on whatsapp to select them press tab and then enter.\n\n📝 Output Format\nWhen you receive a user instruction, you must output only a valid JSON object in the following format. Do not include any extra explanations, comments, or empty fields. Choose the minimal set of steps needed to complete the task.\n\n🎯 Example for the command: “Open YouTube, wait a second, click the search bar at 580, 180, type 'hi', press enter, and then switch to the 5th window with Win+5.”\n\n{\n  \"steps\": [\n    {\n      \"tool\": \"webbrowser\",\n      \"action\": \"open|https://www.youtube.com\"\n    },\n    {\n      \"tool\": \"pyautogui\",\n      \"action\": \"delay|1000\"\n    },\n    {\n      \"tool\": \"pyautogui\",\n      \"action\": \"click|580|180\"\n    },\n    {\n      \"tool\": \"pyautogui\",\n      \"action\": \"type|hi\"\n    },\n    {\n      \"tool\": \"pyautogui\",\n      \"action\": \"press|enter\"\n    },\n    {\n      \"tool\": \"pyautogui\",\n      \"action\": \"hotkey|win|5\"\n    }\n  ]\n}\n\n\nSome shortcuts for my system\n\nOpen Edge .. Win + 1\nOpen File explorer .. Win + 2\nVLC .. Win + 3\nVisual Studio Code Win + 4\nWhatsapp Win + 5\nChrome Win + 6\nNotepad Win + 7\nBrave Win + 8\nGithub Desktop Win + 9\nBash command prompt Win + 10\nAnydesk Win + 11\nPostman Win + 12\n\nANd also you can use \n\nCtrl + F to find \nCtrl + O to open and similar shortcuts too"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        -96
+      ],
+      "id": "c17d0491-af69-4ac7-a22f-2dd08d0747ef",
+      "name": "Planner agent"
+    },
+    {
+      "parameters": {
+        "description": "You should use this tool before giving out your response\n\nUse this tool to breakdown the steps"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1,
+      "position": [
+        160,
+        128
+      ],
+      "id": "f2820f4a-0d8d-45e2-a319-f6154dd5a473",
+      "name": "Must use think tool"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.Command }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are StepBot, an AI assistant whose only job is to break down any user command into a clear, numbered list of primitive GUI or keyboard actions. Do not execute anything—just list the steps.  Rules: 1. Always start numbering at 1 and increment by 1. 2. For launching apps by Windows hotkey, use:      “Open <app> using hotkey Win + <n>” 3. For waiting after opening or navigation, insert:      “Wait for <app or page> to load” 4. To search within an app or page:    - If it supports “Ctrl+F”, use:        “Press Ctrl+F to open search box”    - Otherwise, use a mouse click:        “Click at (x, y) to focus the search field” 5. To navigate search results:    - Use “Press Tab” to move focus      - Use “Press Enter” to select 6. To enter text, use:      “Type ‘<text>’” 7. To send or confirm, use:      “Press Enter”  When you receive a user request, output **only** the numbered steps—no JSON, no extra commentary.    ---  **Example**   User: “Open WhatsApp and send a hi to Lakshana”   Bot should reply:  1. Open WhatsApp using hotkey Win + 5   2. Wait for WhatsApp to load   3. Press Ctrl+F to open the search box   4. Type ‘Lakshana’   5. Press Tab followed by Enter to select the first chat result   6. Wait for the chat window to open   7. Type ‘hi’   8. Press Enter to send the message         Ask ChatGPT"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -496,
+        -96
+      ],
+      "id": "ee6f17ea-dd0d-4375-a422-a795f6bdd992",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        128
+      ],
+      "id": "b555a021-7087-40cf-a109-c9f154b7a8d7",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "kMXcCgFjX5gF9LnS",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:5000/execute",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        688,
+        -96
+      ],
+      "id": "2497bca9-3e4f-4e32-8432-f8daf99a3b82",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "Command"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -720,
+        -96
+      ],
+      "id": "09612850-d9b5-4f00-b9f7-c8085f68d824",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        384,
+        336
+      ],
+      "id": "34ff8fa0-7c36-451d-aaa2-3044f618389e",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "kMXcCgFjX5gF9LnS",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -96,
+        128
+      ],
+      "id": "34565f2e-d093-43eb-8b78-ac28e872e76b",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "kMXcCgFjX5gF9LnS",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Planner agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Planner agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Planner agent": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Must use think tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Planner agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Planner agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Structured Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Planner agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "85c0fd71-e0f7-42ca-8a80-fb9944ddc9e2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5d96a1d220fe725f7242e55a2ce9729bf4c3973a43647e1417b7b694e8921e1b"
+  },
+  "id": "A8oyzq0TZ9shky2t",
+  "tags": []
+}
